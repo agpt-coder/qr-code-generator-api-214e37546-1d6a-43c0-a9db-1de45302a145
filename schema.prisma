@@ -1,0 +1,121 @@
+// datasource db defines the database connection settings.
+// It is configured for PostgreSQL and uses an environment variable for the connection URL.
+// The 'extensions' feature enables the use of PostgreSQL-specific data types.
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+}
+
+// generator db configures Prisma Client settings.
+// It is set up to use Prisma Client Python with asyncio interface and specific features.
+generator db {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = 5
+  previewFeatures      = ["postgresqlExtensions"]
+}
+
+enum CustomizationType {
+  COLOR
+  SIZE
+  LOGO
+}
+
+enum BatchStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id              String           @id @default(dbgenerated("gen_random_uuid()"))
+  email           String           @unique
+  hashedPassword  String
+  role            Role             @default(GENERALUSER)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  QRCodeRequests  QRCodeRequest[]
+  UserPreferences UserPreference[]
+  APIKeys         APIKey[]
+  BatchRequests   BatchRequest[]
+}
+
+model QRCodeRequest {
+  id              String          @id @default(dbgenerated("gen_random_uuid()"))
+  userId          String
+  data            String
+  dataType        DataType
+  size            Int
+  color           String
+  logo            String?
+  errorCorrection ErrorCorrection
+  format          Format          @default(PNG)
+  createdAt       DateTime        @default(now())
+  User            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Customizations  Customization[]
+  batchRequestId  String?
+  BatchRequest    BatchRequest?   @relation(fields: [batchRequestId], references: [id], onDelete: SetNull)
+}
+
+model Customization {
+  id              String            @id @default(dbgenerated("gen_random_uuid()"))
+  QRCodeRequestId String
+  type            CustomizationType
+  value           String
+  QRCodeRequest   QRCodeRequest     @relation(fields: [QRCodeRequestId], references: [id], onDelete: Cascade)
+}
+
+model UserPreference {
+  id              String @id @default(dbgenerated("gen_random_uuid()"))
+  userId          String
+  preferenceKey   String
+  preferenceValue String
+  User            User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model APIKey {
+  id         String    @id @default(dbgenerated("gen_random_uuid()"))
+  userId     String
+  key        String    @unique
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+  User       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BatchRequest {
+  id             String          @id @default(dbgenerated("gen_random_uuid()"))
+  userId         String
+  status         BatchStatus
+  createdAt      DateTime        @default(now())
+  completedAt    DateTime?
+  QRCodeRequests QRCodeRequest[]
+  User           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  ADMINISTRATOR
+  GENERALUSER
+  PREMIUMUSER
+}
+
+enum DataType {
+  URL
+  TEXT
+  VCARD
+  JSON
+  CSV
+}
+
+enum ErrorCorrection {
+  LOW
+  MEDIUM
+  QUARTILE
+  HIGH
+}
+
+enum Format {
+  PNG
+  SVG
+}
+

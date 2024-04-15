@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "qr-code-generator-api-2"
+version = "0.1.0"
+description = "The project focuses on developing an endpoint that primarily receives various types of data, including URLs, text, and contact information, to generate QR codes. Key features of the endpoint include: "
+authors = ["AutoGPT <info@agpt.co>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11"
+pillow = "*"
+bcrypt = "^3.2.0"
+fastapi = "^0.78.0"
+prisma = "*"
+pydantic = "*"
+python-jose = "^3.3.0"
+qrcode = "*"
+uvicorn = "*"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
